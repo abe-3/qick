@@ -1,7 +1,7 @@
 // data_writer.sv
 // SystemVerilog translation of data_writer.vhd
 
-module data_writer_sv #(
+module data_writer #(
     parameter int NT = 16, 
     parameter int N = 16, 
     parameter int B = 16) (
@@ -25,7 +25,10 @@ module data_writer_sv #(
     input logic             WE_REG 
 );
 
-    localparam int NT_LOG2 = $clog2(NT);
+    localparam int NT_LOG2 = int($clog2(NT));
+
+    // sychronizer
+    synchronizer_n #(.N(2)) sync0(.clk(clk), .rstn(rstn), .data_in(WE_REG), .data_out(WE_REG_resync));
 
     // State machine
     typedef enum logic [1:0] {INIT_ST, READ_START_ADDR_ST, WAIT_TVALID_ST, RW_TDATA_ST} statetype;
