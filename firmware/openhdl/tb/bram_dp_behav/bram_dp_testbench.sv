@@ -42,9 +42,8 @@ module bram_dp_testbench #(parameter int ADDR_WIDTH = $clog2(1024),
     logic [DATA_WIDTH-1:0] DOA_IP, DOB_IP;
     
     // open source module
-    bram_dp_behav #(.OUTPUT_REG(1), .ADDR_WIDTH(ADDR_WIDTH), .DATA_WIDTH(DATA_WIDTH))
-                    oss_dut(    RSTA, CLKA, PIPE_ENA, REA, WEA, ADDRA, DIA, DOA_DV, DOA_OSS,
-                                RSTB, CLKB, PIPE_ENB, REB, WEB, ADDRB, DIB, DOB_DV, DOB_OSS);
+    bram_dp_behav #(.OUT_REG_ENA(1), .N(ADDR_WIDTH), .B(DATA_WIDTH))
+                    ip_dut(CLKA, CLKB, PIPE_ENA, PIPE_ENB, WEA, WEB, ADDRA, ADDRB, DIA, DIB, DOA_IP, DOB_IP);
                                 
     // IP module
     bram_dp_xpm #(.OUT_REG_ENA(1), .N(ADDR_WIDTH), .B(DATA_WIDTH))
@@ -63,7 +62,6 @@ module bram_dp_testbench #(parameter int ADDR_WIDTH = $clog2(1024),
         CLKB = 1;
         #9;
         CLKB = 0;
-        #9;
     end
     
     // Pulse Reset and set some logic
@@ -75,35 +73,36 @@ module bram_dp_testbench #(parameter int ADDR_WIDTH = $clog2(1024),
         REA = 0; WEA = 0;
         REB = 0; WEB = 0;
     end
-    
-    // clk through binary signal inputs and assert outputs
-    // bit vector for one port
-    localparam TOT_VEC_WIDTH = DATA_WIDTH + ADDR_WIDTH + 2;
-    
-    // individual vectors for a port and b port
-    logic [TOT_VEC_WIDTH-1:0] vec_port_a, vec_port_b;
-    
+
+    // randomize inputs
+    // urandom by default makes a 32 bit number
     always @(posedge CLKA) begin
         if (~RSTA) begin
-            vec_port_a <= vec_port_a + 1;
+            std::randomize(WEA)
+            std::randomize(REA)
+            std::randomize(ADDRA)
+            std::randomize(DIA)
         end else begin
-            vec_port_a <= 0;
+            WEA <= 0;
+            REA <= 0;
+            ADDRA <= '0;
+            DIA <= '0;
         end
     end
     
     always @(posedge CLKB) begin
         if (~RSTB) begin
-            vec_port_b <= vec_port_b + 1;
+            std::randomize(WEB)
+            std::randomize(REB)
+            std::randomize(ADDRB)
+            std::randomize(DIB)
         end else begin
-            vec_port_b <= 0;
+            WEB <= 0;
+            REB <= 0;
+            ADDRB <= '0;
+            DIB <= '0;
         end
     end
-    
-    // assign inputs to our counter
-    assign WEA = vec_port_a[0];                             assign WEB = vec_port_b[0];
-    assign REA = vec_port_a[1];                             assign REB = vec_port_b[1];
-    assign ADDRA = vec_port_a[ADDR_WIDTH+1:2];              assign ADDRB = vec_port_b[ADDR_WIDTH+1:2];
-    assign DIA = vec_port_a[TOT_VEC_WIDTH-1:ADDR_WIDTH+2];  assign DIB = vec_port_b[TOT_VEC_WIDTH-1:ADDR_WIDTH+2];
     
     // check if outputs are equivalent on falling edge
     // Port A
