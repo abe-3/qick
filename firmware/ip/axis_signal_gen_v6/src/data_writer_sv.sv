@@ -29,6 +29,7 @@ module data_writer_sv #(
 
     // State machine
     typedef enum logic [1:0] {INIT_ST, READ_START_ADDR_ST, WAIT_TVALID_ST, RW_TDATA_ST} statetype;
+    typedef enum logic [1:0] {INIT_ST, READ_START_ADDR_ST, WAIT_TVALID_ST, RW_TDATA_ST} statetype;
     statetype state;
 
     // WE_REG_resync
