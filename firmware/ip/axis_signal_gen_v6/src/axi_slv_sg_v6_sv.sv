@@ -87,9 +87,9 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     assign rvalid = axi_rvalid;
 
     always_ff@(posedge aclk) begin 
-        if (~aresetn) begin 
+        if aresetn == 0 begin 
             axi_awready <= 0;
-            aw_en <= 0;
+            aw_en <= 1;
         end else begin 
             if (axi_awready == 0 && awvalid == 1 && wvalid == 1 && aw_en == 1) begin 
                 axi_awready <= 1;
@@ -322,13 +322,14 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     always_ff@(posedge aclk) begin 
         if (~aresetn) begin 
             axi_arready <= 0;
-            axi_araddr <= 1;
+            axi_araddr <= 0;
         end else begin 
             if (axi_arready == 0 && arvalid == 1) begin 
                 axi_arready <= 1;
                 axi_araddr <= araddr;
-            end else 
+            end else begin
                 axi_araddr <= 0;
+            end
         end
     end
 
@@ -350,7 +351,9 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     assign slv_reg_rden = axi_arready && arvalid && (~axi_rvalid);
 
     always_comb begin : decoding_regs_no_aclk
-        logic [OPT_MEM_ADDR_BITS:ADDR_LSB] loc_addr;
+        logic [OPT_MEM_ADDR_BITS:ADDR_LSB:0] loc_addr;
+
+        loc_addr = axi_araddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB]
 
         case (loc_addr)
             'b0000: reg_data_out = slv_reg0;
