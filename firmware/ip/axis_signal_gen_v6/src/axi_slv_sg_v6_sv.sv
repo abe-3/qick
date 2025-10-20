@@ -50,7 +50,7 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     logic [1:0] axi_rresp;
     logic axi_rvalid;
 
-    localparam int ADDR_LSB = (DATA_WIDTH/32)+1;
+    localparam int ADDR_LSB = $clog2(DATA_WIDTH/8); //(DATA_WIDTH/32)+1;
     localparam int OPT_MEM_ADDR_BITS = 3;
 
     // Number of Slave Registers 16
@@ -87,7 +87,7 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     assign rvalid = axi_rvalid;
 
     always_ff@(posedge aclk) begin 
-        if aresetn == 0 begin 
+        if (~aresetn) begin 
             axi_awready <= 0;
             aw_en <= 1;
         end else begin 
@@ -128,9 +128,10 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
 
     // Implement memory mapped register select and write logic generation
     assign slv_reg_wren = axi_wready && wvalid && axi_awready && awvalid;
+    
+    logic [OPT_MEM_ADDR_BITS:0] loc_addr_w;
 
     always_ff@(posedge aclk) begin : decoding_regs_aclk
-        logic [OPT_MEM_ADDR_BITS:0] loc_addr;
         if (~aresetn) begin 
             slv_reg0 <= 0;
             slv_reg1 <= 0;
@@ -149,11 +150,11 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
             slv_reg14 <= 0;
             slv_reg15 <= 0;
         end else begin 
-            loc_addr <= axi_awaddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB];
+            loc_addr_w = axi_awaddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB];
 
             if (slv_reg_wren) begin 
-                case (loc_addr)
-                    'b0000: begin
+                case (loc_addr_w)
+                    4'b0000: begin
                            for (int byte_index = 0; byte_index < (DATA_WIDTH/8); byte_index++) begin
                              if (wstrb[byte_index]) begin
                              slv_reg0[(byte_index*8) +: 8] <= wdata[(byte_index*8) +: 8];
@@ -322,14 +323,13 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     always_ff@(posedge aclk) begin 
         if (~aresetn) begin 
             axi_arready <= 0;
-            axi_araddr <= 0;
+            axi_araddr <= {(ADDR_WIDTH){1'b1}};
         end else begin 
             if (axi_arready == 0 && arvalid == 1) begin 
                 axi_arready <= 1;
                 axi_araddr <= araddr;
-            end else begin
-                axi_araddr <= 0;
-            end
+            end else 
+                axi_arready <= 0;
         end
     end
 
@@ -349,13 +349,14 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
 
     // Implement memory mapped register select and read logic generation
     assign slv_reg_rden = axi_arready && arvalid && (~axi_rvalid);
+    
+    logic [OPT_MEM_ADDR_BITS:0] loc_addr_r;
+        
+    assign loc_addr_r = axi_araddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB];
 
     always_comb begin : decoding_regs_no_aclk
-        logic [OPT_MEM_ADDR_BITS:ADDR_LSB:0] loc_addr;
 
-        loc_addr = axi_araddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB]
-
-        case (loc_addr)
+        case (loc_addr_r)
             'b0000: reg_data_out = slv_reg0;
             'b0001: reg_data_out = slv_reg1;
             'b0010: reg_data_out = slv_reg2;
@@ -393,6 +394,6 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
 
     // Output registers
     assign START_ADDR_REG = slv_reg0;
-    assign WE_REG = slv_reg1;
+    assign WE_REG = slv_reg1[0];
 
 endmodule
