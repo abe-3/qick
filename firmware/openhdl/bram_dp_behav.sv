@@ -19,7 +19,7 @@ output logic [B-1:0] dob    // Data B Out
 );
 
     // unpacked datatype
-    // acces through unpacked then packed e.g. [items][data]
+    // access through unpacked then packed e.g. [items][data]
     logic [B-1:0] memory [2**N-1:0];
 
     // Internal Logic
@@ -28,7 +28,9 @@ output logic [B-1:0] dob    // Data B Out
 
     // Internal output for pulling down
     logic [B-1:0] doa_undriven, dob_undriven;
-
+    
+    logic [B-1:0] doa_delayed, dob_delayed;
+    
     // Port A mem write
     always_ff @(posedge clka) begin
         if (ena) begin
@@ -50,7 +52,31 @@ output logic [B-1:0] dob    // Data B Out
             end
         end
     end
-
+    /*
+    always @(posedge clka, posedge clkb) begin
+        if ($rose(clka) && ena) begin
+            if (wea) begin
+                if ($rose(clkb) && enb && web && (addra == addrb)) begin
+                    memory[addra] <= 'x;
+                end else begin
+                    memory[addra] <= dia;
+                end
+            end else begin
+                doa_to_reg <= memory[addra];
+            end
+        end
+        
+        if ($rose(clkb) && enb) begin
+            if (web) begin
+                if (!($rose(clka) && ena && wea && (addra == addrb))) begin
+                    memory[addrb] <= dib;
+                end
+            end else begin
+                dob_to_reg <= memory[addrb];
+            end
+        end
+    end
+    */
     // Output Registers
     generate
         if (OUT_REG_ENA) begin : gen_output_reg
@@ -70,10 +96,22 @@ output logic [B-1:0] dob    // Data B Out
             assign dob_undriven = dob_to_reg;
         end
     endgenerate
+    
+    always_ff @(posedge clka) begin
+        //doa_delayed <= doa_undriven;
+        doa_delayed <= $isunknown(doa_undriven) ? '0 : doa_undriven;
+    end
+    
+    always_ff @(posedge clkb) begin
+        //dob_delayed <= dob_undriven;
+        dob_delayed <= $isunknown(dob_undriven) ? '0 : dob_undriven;
+    end
     // if any bit is x or z, make 0
     // otherwise no change
-    assign doa = $isunknown(doa_undriven) ? '0 : doa_undriven;
-    assign dob = $isunknown(dob_undriven) ? '0 : dob_undriven;
+    //assign doa = $isunknown(doa_undriven) ? '0 : doa_undriven;
+    //assign dob = $isunknown(dob_undriven) ? '0 : dob_undriven;
+    assign dob = dob_delayed;
+    assign doa = doa_delayed;    
 endmodule
 
 /* verilator lint_on MULTIDRIVEN */
