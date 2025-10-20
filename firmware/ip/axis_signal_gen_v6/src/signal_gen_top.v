@@ -156,54 +156,62 @@ generate
       /* Block instantiation */
       /***********************/
       // Memory for Real Part.
-      dp_bmem_behav
+      bram_dp_behav
       #(
-         .OUT_REG_ENA   (1),
+         .OUTPUT_REG   (1),
          // Memory address size.
-         .N  (N),
+         .ADDR_WIDTH  (N),
          // Data width.
-         .B  (16)
+         .DATA_WIDTH  (16)
       )
       mem_real_i
-      ( 
-         .clka    (s0_axis_aclk           ),
-         .clkb    (aclk                 ),
-         .ena     (mem_ena[i]           ),
-         .enb     (1'b1                 ),
-         .wea     (mem_wea              ),
-         .web     (1'b0                 ),
-         .addra   (mem_addra               ),
-         .addrb   (mem_addrb               ),
-         .dia     (mem_dia[15:0]           ),
-         .dib     (16'h0000             ),
-         .doa     (                     ),
-         .dob     (mem_dob_real[i*16 +: 16]   )
+      (
+         .RSTA(0),
+         .RSTB(0),
+         .CLKA    (s0_axis_aclk           ),
+         .CLKB    (aclk                 ),
+         .PIPE_ENA     (mem_ena[i]           ),
+         .PIPE_ENB     (1'b1                 ),
+         .WEA     (mem_wea              ),
+         .WEB     (1'b0                 ),
+         .ADDRA   (mem_addra               ),
+         .ADDRB   (mem_addrb               ),
+         .DIA     (mem_dia[15:0]           ),
+         .DIB     (16'h0000             ),
+         .DOA_DV(),
+         .DOB_DV(),
+         .DOA     (                     ),
+         .DOB     (mem_dob_real[i*16 +: 16]   )
       );
 
         if (ENVELOPE_TYPE == "COMPLEX") begin
             // Memory for Imaginary Part.
-            dp_bmem_behav
+            bram_dp_behav
             #(
-               .OUT_REG_ENA   (1),
+               .OUTPUT_REG   (1),
                // Memory address size.
-               .N  (N),
+               .ADDR_WIDTH  (N),
                // Data width.
-               .B  (16)
+               .DATA_WIDTH  (16)
             )
             mem_imag_i
-            ( 
-               .clka    (s0_axis_aclk            ),
-               .clkb    (aclk                 ),
-               .ena     (mem_ena[i]           ),
-               .enb     (1'b1                 ),
-               .wea     (mem_wea              ),
-               .web     (1'b0                 ),
-               .addra   (mem_addra               ),
-               .addrb   (mem_addrb               ),
-               .dia     (mem_dia[31:16]       ),
-               .dib     (16'h0000             ),
-               .doa     (                     ),
-               .dob     (mem_dob_imag[i*16 +: 16]   )
+            (
+               .RSTA(0),
+               .RSTB(0),
+               .CLKA    (s0_axis_aclk            ),
+               .CLKB    (aclk                 ),
+               .PIPE_ENA     (mem_ena[i]           ),
+               .PIPE_ENB     (1'b1                 ),
+               .WEA     (mem_wea              ),
+               .WEB     (1'b0                 ),
+               .ADDRA   (mem_addra               ),
+               .ADDRB   (mem_addrb               ),
+               .DIA     (mem_dia[31:16]       ),
+               .DIB     (16'h0000             ),
+               .DOA_DV(),
+               .DOB_DV(),
+               .DOA     (                     ),
+               .DOB     (mem_dob_imag[i*16 +: 16]   )
             );
         end
         else begin
