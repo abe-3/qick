@@ -2,6 +2,8 @@
 // DUT: axis_signal_gen_v2
 //    IF: s_axi -> axi_mst_0
 
+`timescale 1ns/1ns;
+
 import axi_vip_pkg::*;
 import axi_mst_0_pkg::*;
 
@@ -181,6 +183,8 @@ axi_mst_0_mst_t   axi_mst_0_agent;
 assign s1_axis_tdata = {{10{1'b0}},phrst_r,stdysel_r,mode_r,outsel_r,nsamp_r,{16{1'b0}},gain_r,{16{1'b0}},addr_r,phase_r,freq_r};
 
 initial begin
+    
+    
    // Create agents.
    axi_mst_0_agent   = new("axi_mst_0 VIP Agent",tb.axi_mst_0_i.inst.IF);
 
@@ -209,21 +213,21 @@ initial begin
    /*
    ADDR              = 0
    */ 
-      
+      $display("About to send start_addr");
    // start_addr.
    data_wr = 0;
-   axi_mst_0_agent.AXI4LITE_WRITE_BURST(addr_start_addr, prot, data_wr, resp);
+   axi_mst_0_agent.AXI4LITE_WRITE_BURST(addr_start_addr, prot, data_wr, resp); // simulation never gets passed this part
    #10;
-   
+     $display("WE stuff");
    // we.
    data_wr = 1;
    axi_mst_0_agent.AXI4LITE_WRITE_BURST(addr_we, prot, data_wr, resp);
    #10;  
-   
+   $display("Loading table memory!!!");
    // Load Envelope Table Memory.
    tb_load_mem    <= 1;
    wait (tb_load_mem_done);
-   
+   $display("TB load mem is done and we can send data!");
    #100;
    
    // we.
@@ -265,9 +269,23 @@ initial begin
    wait (tb_load_mem);
 
     // File must be in the same directory from where the simulation is run
-   fd = $fopen("./gauss.txt","r");
+   fd = $fopen("/home/hrlclinic/Documents/troy_axi_sig_gen/qick/firmware/ip/axis_signal_gen_v6/src/tb/gauss.txt","r");
+   if (fd == 0) begin
+    $display("shit");
+   end else begin
+    $display("yay");
+   end
+   
+   if ($fscanf(fd,"%d,%d", vali,valq) == 2)
+    $display("Good");
+   else 
+    $error("Bad");
+    
+    $display("I = %0d, Q = %0d => tdata = 0x%08h", ii, qq, {qq, ii});
 
-   wait (s0_axis_tready);
+
+   wait (s0_axis_tready); // never getting passed this point. Thus, there the design is not stimulated with the Guass.txt data
+   $display("We finally got passed the current s0_axis_tready challenge!");
 
    while($fscanf(fd,"%d,%d", vali,valq) == 2) begin
       $display("I,Q: %d, %d", vali,valq);

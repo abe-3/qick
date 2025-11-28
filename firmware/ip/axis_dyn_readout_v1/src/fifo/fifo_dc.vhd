@@ -171,7 +171,7 @@ wptr_gc_i : gray2bin
 		din		=> wptr_gc,
 		dout	=> wptr_c
 	);
-
+---------------------------------
 -- rptr_i: binary to gray.
 rptr_i : bin2gray
 	Generic map

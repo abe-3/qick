@@ -34,4 +34,3 @@ end generate;
 dout <= gray;
 
 end rtl;
-
