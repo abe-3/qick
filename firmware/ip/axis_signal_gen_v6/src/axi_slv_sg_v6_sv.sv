@@ -1,8 +1,5 @@
 // axi_slv_sg_v6.sv
-// 
-
-// axi_slv_sg_v6.sv
-// 
+//
 
 module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
     input logic aclk,
@@ -153,6 +150,7 @@ module axi_slv_sg_v6_sv #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 6)(
             slv_reg14 <= 0;
             slv_reg15 <= 0;
         end else begin 
+            // important blocking assignment
             loc_addr_w = axi_awaddr[(ADDR_LSB + OPT_MEM_ADDR_BITS):ADDR_LSB];
 
             if (slv_reg_wren) begin 
